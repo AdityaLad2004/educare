@@ -5,8 +5,12 @@ function DoctorDashboard() {
   const [performance, setPerformance] = useState([]);
   const [sortBy, setSortBy] = useState('name');
   const [showPerformance, setShowPerformance] = useState(false);
-  const [prescriptions, setPrescriptions] = useState({}); // Track prescription inputs
-  const [showPrescriptionForm, setShowPrescriptionForm] = useState({}); // Toggle per-user form
+  const [prescriptions, setPrescriptions] = useState({});
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState({});
+  const [appointments, setAppointments] = useState([]);
+
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [documents, setDocuments] = useState([]);
 
   useEffect(() => {
     const fetchPerformance = async () => {
@@ -24,7 +28,37 @@ function DoctorDashboard() {
       }
     };
     fetchPerformance();
+
+    const fetchPatients = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/users/patients');
+        
+      } catch (err) {
+        console.error('Failed to fetch performance:', err);
+      }
+    };
+    fetchPatients();
+
+    const fetchAppointments = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/appointments');
+        setAppointments(res.data);
+      } catch (err) {
+        console.error('Failed to fetch appointments:', err);
+      }
+    };
+    fetchAppointments();
   }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/list-documents');
+      setDocuments(res.data.documents);
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+      alert('Error loading cloud documents.');
+    }
+  };
 
   const handleSortChange = (e) => {
     setSortBy(e.target.value);
@@ -59,9 +93,9 @@ function DoctorDashboard() {
     <div style={{ padding: '20px' }}>
       <h1>Doctor Dashboard</h1>
 
-      {/* View Patients Card */}
-      <div 
-        onClick={() => setShowPerformance(!showPerformance)} 
+      {/* View Patients */}
+      <div
+        onClick={() => setShowPerformance(!showPerformance)}
         style={{
           cursor: 'pointer',
           background: '#e0f7fa',
@@ -74,6 +108,43 @@ function DoctorDashboard() {
       >
         <h3 style={{ margin: 0 }}>👨‍⚕️ View Patients</h3>
       </div>
+
+      {/* View Cloud Documents */}
+      <div
+        onClick={() => {
+          setShowDocuments(!showDocuments);
+          if (!showDocuments) fetchDocuments();
+        }}
+        style={{
+          cursor: 'pointer',
+          background: '#e0f7fa',
+          padding: '20px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          width: 'fit-content'
+        }}
+      >
+        <h3 style={{ margin: 0 }}>☁️ View Cloud Documents</h3>
+      </div>
+
+      {showDocuments && (
+        <div style={{ marginBottom: '20px' }}>
+          <h2>Cloud Documents</h2>
+          {documents.length === 0 ? (
+            <p>No documents found in S3 bucket.</p>
+          ) : (
+            <ul>
+              {documents.map((doc, i) => (
+                <li key={i}>
+                  <strong>{doc.key}</strong> — {Math.round(doc.size / 1024)} KB,
+                  Last Modified: {new Date(doc.lastModified).toLocaleString()}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {showPerformance && (
         <>
@@ -123,7 +194,6 @@ function DoctorDashboard() {
                   </tbody>
                 </table>
 
-                {/* Give Prescription Button */}
                 <button
                   style={{ marginTop: '10px' }}
                   onClick={() => setShowPrescriptionForm((prev) => ({
@@ -134,7 +204,6 @@ function DoctorDashboard() {
                   📝 Give Prescription
                 </button>
 
-                {/* Conditional Prescription Form */}
                 {showPrescriptionForm[user._id] && (
                   <div style={{ marginTop: '10px' }}>
                     <textarea
@@ -151,6 +220,21 @@ function DoctorDashboard() {
                       Submit Prescription
                     </button>
                   </div>
+                )}
+
+                <h4>Appointments:</h4>
+                {appointments.filter(app => app.patientName === user.name).length === 0 ? (
+                  <p>No appointments scheduled.</p>
+                ) : (
+                  <ul>
+                    {appointments
+                      .filter(app => app.patientName === user.name)
+                      .map((app, i) => (
+                        <li key={i}>
+                          📅 {new Date(app.date).toLocaleDateString()} at {app.time}
+                        </li>
+                      ))}
+                  </ul>
                 )}
               </div>
             ))

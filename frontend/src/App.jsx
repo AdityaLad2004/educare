@@ -29,7 +29,7 @@ function App() {
     <Router>
       <div>
         <nav style={navStyle}>
-          <h2 style={{ margin: 0 }}>EduCare ❤️</h2>
+          <h2 style={{ margin: 0 }}>EduCare </h2>
           <div>
             <Link to="/login" style={linkStyle}>Login</Link>
             <Link to="/register" style={linkStyle}>Register</Link>

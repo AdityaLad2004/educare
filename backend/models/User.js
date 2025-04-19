@@ -5,12 +5,15 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   role: { type: String, enum: ['user', 'doctor'], default: 'user' },
-  quizResults: [
+  wardName: { type: String, required: function() { return this.role === 'user'; } },
+  wardAge: { type: Number, required: function() { return this.role === 'user'; } },
+  wardGender: { type: String, enum: ['male', 'female', 'other'], required: function() { return this.role === 'user'; } },
+  quizScores: [
     {
-      questionId: Number,
-      answer: String,
-      correct: Boolean,
-    },
+      game: String, 
+      score: Number,
+      date: { type: Date, default: Date.now }
+    }
   ],
 });
 
